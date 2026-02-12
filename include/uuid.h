@@ -29,7 +29,6 @@
 #  else
 #    include <gsl/span>
 #  endif
-#endif
 
 #endif
 
