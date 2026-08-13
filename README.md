@@ -52,6 +52,7 @@ Other:
 | `operator<` | for comparing whether one UUIDs is less than another. Although this operation does not make much logical sense, it is necessary in order to store UUIDs in a std::set. |
 | `operator<<` | to write a UUID to an output stream using the canonical textual representation. |
 | `to_string()` | creates a string with the canonical textual representation of a UUID. |
+| `std::formatter<uuid>` | to format a UUID with `std::format()` using the canonical textual representation. Available when the standard library provides `<format>`. |
 
 ## Library history
 This library is an implementation of the proposal [P0959](P0959.md).
@@ -210,6 +211,18 @@ The following is a list of examples for using the library:
   uuid empty;
   assert(uuids::to_string(empty) == "00000000-0000-0000-0000-000000000000");
   assert(uuids::to_string<wchar_t>(empty) == L"00000000-0000-0000-0000-000000000000");
+  ```
+
+* Formatting with `std::format()`
+
+  A specialization of `std::formatter` is available when the standard library provides the `<format>` header. It formats the canonical textual representation and derives from the formatter for string views, so the fill, align and width specifiers work as they do for strings.
+
+  ```cpp
+  auto id = uuids::uuid::from_string("47183823-2574-4bfd-b411-99ed177d3e43").value();
+
+  assert(std::format("{}", id) == "47183823-2574-4bfd-b411-99ed177d3e43");
+  assert(std::format(L"{}", id) == L"47183823-2574-4bfd-b411-99ed177d3e43");
+  assert(std::format("{:*>38}", id) == "**47183823-2574-4bfd-b411-99ed177d3e43");
   ```
 
 * Using with an orderered associative container
