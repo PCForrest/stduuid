@@ -9,6 +9,15 @@
 
 using namespace uuids;
 
+// Whenever the standard library advertises std::span, the library must be using it instead of falling back to gsl::span.
+// Detection once keyed off the value of __cplusplus, which silently picked gsl::span on compilers whose C++20 support predates that value being bumped; 
+// a check for one such compiler version would not have covered the next one.
+#ifdef __cpp_lib_span
+static_assert(std::is_same_v<uuids::span<std::byte const, 16>,
+                             std::span<std::byte const, 16>>,
+              "std::span is available but stduuid fell back to gsl::span");
+#endif
+
 namespace
 {
    // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0205r0.html
