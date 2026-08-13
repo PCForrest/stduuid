@@ -6,6 +6,9 @@
 #include <unordered_set>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <iterator>
 
 using namespace uuids;
 
@@ -673,3 +676,99 @@ TEST_CASE("Test std::format", "[format]")
    }
 }
 #endif
+
+TEST_CASE("Test to_string with an output iterator", "[ops]")
+{
+   auto const expected = std::string{ "47183823-2574-4bfd-b411-99ed177d3e43" };
+   auto id = uuids::uuid::from_string(expected).value();
+
+   SECTION("appending to an existing buffer")
+   {
+      std::string buffer{ "id=" };
+      uuids::to_string(id, std::back_inserter(buffer));
+      REQUIRE(buffer == "id=" + expected);
+   }
+
+   SECTION("writing to an array")
+   {
+      char buffer[36];
+      auto end = uuids::to_string(id, buffer);
+      REQUIRE(end == buffer + 36);
+      REQUIRE(std::string(buffer, 36) == expected);
+   }
+
+   SECTION("wide characters")
+   {
+      std::wstring buffer;
+      uuids::to_string<wchar_t>(id, std::back_inserter(buffer));
+      REQUIRE(buffer == L"47183823-2574-4bfd-b411-99ed177d3e43");
+   }
+
+   SECTION("nil uuid")
+   {
+      std::string buffer;
+      uuids::to_string(uuid{}, std::back_inserter(buffer));
+      REQUIRE(buffer == "00000000-0000-0000-0000-000000000000");
+   }
+
+   SECTION("agrees with the string returning overload")
+   {
+      auto engine = uuids::uuid_random_generator::engine_type{};
+      seed_rng(engine);
+      uuids::uuid_random_generator gen{ engine };
+
+      for (int i = 0; i < 100; ++i)
+      {
+         auto const generated = gen();
+
+         std::string narrow;
+         uuids::to_string(generated, std::back_inserter(narrow));
+         REQUIRE(narrow == uuids::to_string(generated));
+
+         std::wstring wide;
+         uuids::to_string<wchar_t>(generated, std::back_inserter(wide));
+         REQUIRE(wide == uuids::to_string<wchar_t>(generated));
+      }
+   }
+}
+
+TEST_CASE("Test writing to an output stream", "[ops]")
+{
+   auto const expected = std::string{ "47183823-2574-4bfd-b411-99ed177d3e43" };
+   auto id = uuids::uuid::from_string(expected).value();
+
+   SECTION("narrow characters")
+   {
+      std::ostringstream os;
+      os << id;
+      REQUIRE(os.str() == expected);
+   }
+
+   SECTION("wide characters")
+   {
+      std::wostringstream os;
+      os << id;
+      REQUIRE(os.str() == L"47183823-2574-4bfd-b411-99ed177d3e43");
+   }
+
+   SECTION("nil uuid")
+   {
+      std::ostringstream os;
+      os << uuid{};
+      REQUIRE(os.str() == "00000000-0000-0000-0000-000000000000");
+   }
+
+   SECTION("stream width and fill are honoured")
+   {
+      std::ostringstream os;
+      os << std::setw(40) << std::setfill('*') << id;
+      REQUIRE(os.str() == "****" + expected);
+   }
+
+   SECTION("part of a larger stream")
+   {
+      std::ostringstream os;
+      os << "id=" << id << ";";
+      REQUIRE(os.str() == "id=" + expected + ";");
+   }
+}
