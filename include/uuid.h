@@ -19,17 +19,17 @@
 
 #ifdef __cplusplus
 
-#  if (__cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
-#    define LIBUUID_CPP20_OR_GREATER
+#  if __has_include(<version>)
+#    include <version>
 #  endif
 
-#endif
+#  if defined(__cpp_lib_span) || ((__cplusplus >= 202002L || defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) && __has_include(<span>))
+#    include <span>
+#    define STDUUID_USE_STD_SPAN
+#  else
+#    include <gsl/span>
+#  endif
 
-
-#ifdef LIBUUID_CPP20_OR_GREATER
-#include <span>
-#else
-#include <gsl/span>
 #endif
 
 #ifdef _WIN32
@@ -66,7 +66,7 @@
 
 namespace uuids
 {
-#ifdef __cpp_lib_span
+#ifdef STDUUID_USE_STD_SPAN
    template <class ElementType, std::size_t Extent>
    using span = std::span<ElementType, Extent>;
 #else
