@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7.0)
+cmake_minimum_required(VERSION 3.16)
 
 set(UUID_MAIN_PROJECT OFF)
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -15,6 +15,16 @@ option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 option(UUID_USING_CXX20_SPAN "Using span from std instead of gsl" OFF)
 option(UUID_ENABLE_INSTALL "Create an install target" ${UUID_MAIN_PROJECT})
+
+# The C++ standard the tests are compiled with. The library itself picks
+# std::span over gsl::span on its own whenever the standard library provides it.
+if(NOT DEFINED CXX_STD_VER)
+  if(UUID_USING_CXX20_SPAN)
+    set(CXX_STD_VER cxx_std_20)
+  else()
+    set(CXX_STD_VER cxx_std_17)
+  endif()
+endif()
 
 # Library target
 add_library(${PROJECT_NAME} INTERFACE)

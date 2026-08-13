@@ -1,8 +1,7 @@
 # stduuid
 A C++17 cross-platform single-header library implementation **for universally unique identifiers**, simply know as either UUID or GUID (mostly on Windows). A UUID is a 128-bit number used to uniquely identify information in computer systems, such as database table keys, COM interfaces, classes and type libraries, and many others.
 
-[![Build Status](https://travis-ci.org/mariusbancila/stduuid.svg?branch=master)](https://travis-ci.org/mariusbancila/stduuid)
-[![Tests status](https://ci.appveyor.com/api/projects/status/0kw1n2s2xqxu5m62?svg=true&pendingText=tests%20-%20pending&failingText=tests%20-%20FAILED&passingText=tests%20-%20OK)](https://ci.appveyor.com/project/mariusbancila/stduuid)
+[![CI](https://github.com/mariusbancila/stduuid/actions/workflows/ci.yml/badge.svg)](https://github.com/mariusbancila/stduuid/actions/workflows/ci.yml)
 
 For information about UUID/GUIDs see:
 * [Universally unique identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier)
@@ -305,6 +304,11 @@ To enable the experimental time-based uuid generator set the `UUID_TIME_GENERATO
 ```
 cd build
 cmake -G "Visual Studio 17" -A x64 -DUUID_TIME_GENERATOR=ON ..
+```
+
+The tests are compiled with C++17 by default. Set the `CXX_STD_VER` variable to build them with a newer standard; the accepted values are the CMake compile features `cxx_std_17`, `cxx_std_20` and `cxx_std_23`. This is what the continuous integration build uses to test the library with all three standards.
+```
+cmake -S . -B build -DCXX_STD_VER=cxx_std_20
 ```
 
 ## Credits
