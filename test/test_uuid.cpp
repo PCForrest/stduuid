@@ -627,3 +627,40 @@ TEST_CASE("Test as_bytes", "[ops]")
    }
 
 }
+
+#ifdef STDUUID_USE_STD_FORMAT
+TEST_CASE("Test std::format", "[format]")
+{
+   auto id = uuids::uuid::from_string("47183823-2574-4bfd-b411-99ed177d3e43").value();
+   auto str = uuids::to_string(id);
+   auto wstr = uuids::to_string<wchar_t>(id);
+
+   SECTION("no format specifier")
+   {
+      REQUIRE(std::format("{}", id) == str);
+      REQUIRE(std::format(L"{}", id) == wstr);
+      REQUIRE(std::format("{}", uuid{}) == "00000000-0000-0000-0000-000000000000");
+   }
+
+   SECTION("width, fill and align")
+   {
+      REQUIRE(std::format("{:>38}", id) == "  " + str);
+      REQUIRE(std::format("{:<38}", id) == str + "  ");
+      REQUIRE(std::format("{:^40}", id) == "  " + str + "  ");
+      REQUIRE(std::format("{:*>38}", id) == "**" + str);
+      REQUIRE(std::format("{:*<38}", id) == str + "**");
+      REQUIRE(std::format(L"{:*>38}", id) == L"**" + wstr);
+   }
+
+   SECTION("width narrower than the uuid is ignored")
+   {
+      REQUIRE(std::format("{:10}", id) == str);
+   }
+
+   SECTION("several uuids in one call")
+   {
+      REQUIRE(std::format("{} {}", id, uuid{}) ==
+              str + " 00000000-0000-0000-0000-000000000000");
+   }
+}
+#endif

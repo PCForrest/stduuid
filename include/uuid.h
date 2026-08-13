@@ -30,6 +30,14 @@
 #    include <gsl/span>
 #  endif
 
+// Formatting support is optional and, like the span detection above, is keyed
+// off the feature-test macro rather than the value of __cplusplus: <format>
+// arrived well after C++20 itself in every standard library.
+#  if defined(__cpp_lib_format) && __has_include(<format>)
+#    include <format>
+#    define STDUUID_USE_STD_FORMAT
+#  endif
+
 #endif
 
 #ifdef _WIN32
@@ -962,6 +970,23 @@ namespace std
 #endif
       }
    };
+
+#ifdef STDUUID_USE_STD_FORMAT
+   // Formatting a uuid means formatting its canonical textual representation,
+   // so the specialization derives from the one for string views. That way the
+   // fill, align and width specifiers are all supported, and behave as they do
+   // for any other string, without this having to parse them itself.
+   template <class CharT>
+   struct formatter<uuids::uuid, CharT> : formatter<basic_string_view<CharT>, CharT>
+   {
+      template <class FormatContext>
+      auto format(uuids::uuid const & id, FormatContext & ctx) const
+      {
+         return formatter<basic_string_view<CharT>, CharT>::format(
+            uuids::to_string<CharT>(id), ctx);
+      }
+   };
+#endif
 }
 
 #endif /* STDUUID_H */
