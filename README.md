@@ -51,7 +51,7 @@ Other:
 | `operator==` and `operator!=` | for UUIDs comparison for equality/inequality |
 | `operator<` | for comparing whether one UUIDs is less than another. Although this operation does not make much logical sense, it is necessary in order to store UUIDs in a std::set. |
 | `operator<<` | to write a UUID to an output stream using the canonical textual representation. |
-| `to_string()` | creates a string with the canonical textual representation of a UUID. |
+| `to_string()` | creates a string with the canonical textual representation of a UUID. An overload taking an output iterator writes the same characters to a caller provided buffer, without allocating. |
 | `std::formatter<uuid>` | to format a UUID with `std::format()` using the canonical textual representation. Available when the standard library provides `<format>`. |
 
 ## Library history
@@ -226,6 +226,27 @@ The following is a list of examples for using the library:
   assert(uuids::to_string(empty) == "00000000-0000-0000-0000-000000000000");
   assert(uuids::to_string<wchar_t>(empty) == L"00000000-0000-0000-0000-000000000000");
   ```
+
+* Converting to string without allocating
+
+  An overload of `to_string()` writes the 36 characters of the representation to an output iterator and returns the iterator past the last one written. This is useful when a UUID is part of a larger text, such as a JSON document or a log message, because the destination buffer is reused instead of a string being allocated for every UUID.
+
+  ```cpp
+  auto id = uuids::uuid::from_string("47183823-2574-4bfd-b411-99ed177d3e43").value();
+
+  std::string text{"id="};
+  uuids::to_string(id, std::back_inserter(text));
+  assert(text == "id=47183823-2574-4bfd-b411-99ed177d3e43");
+
+  char buffer[36];
+  auto end = uuids::to_string(id, buffer);
+  assert(end == buffer + 36);
+
+  std::wstring wide;
+  uuids::to_string<wchar_t>(id, std::back_inserter(wide));
+  ```
+
+  The character type defaults to `char` and is specified explicitly for anything else, because it cannot be deduced from an iterator such as `std::back_insert_iterator`.
 
 * Formatting with `std::format()`
 

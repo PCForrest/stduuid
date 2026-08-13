@@ -394,6 +394,9 @@ namespace uuids
              class Allocator = std::allocator<CharT>>
    std::basic_string<CharT, Traits, Allocator> to_string(uuid const &id);
 
+   template <class CharT = char, class OutputIt>
+   OutputIt to_string(uuid const &id, OutputIt out);
+
    // --------------------------------------------------------------------------------------------------------------------------
    // uuid class
    // --------------------------------------------------------------------------------------------------------------------------
@@ -570,6 +573,9 @@ namespace uuids
       template<class CharT, class Traits, class Allocator>
       friend std::basic_string<CharT, Traits, Allocator> to_string(uuid const& id);
 
+      template<class CharT, class OutputIt>
+      friend OutputIt to_string(uuid const& id, OutputIt out);
+
       friend std::hash<uuid>;
    };
 
@@ -592,6 +598,24 @@ namespace uuids
       return lhs.data < rhs.data;
    }
 
+   // Writes the 36 characters of the canonical textual representation to an output iterator, without allocating a string of its own. 
+   // This is what the overload below is implemented in terms of, so both always agree.
+   template <class CharT, class OutputIt>
+   inline OutputIt to_string(uuid const & id, OutputIt out)
+   {
+      for (size_t index = 0; index < 16; ++index)
+      {
+         if (index == 4 || index == 6 || index == 8 || index == 10)
+         {
+            *out++ = static_cast<CharT>('-');
+         }
+         *out++ = detail::guid_encoder<CharT>[id.data[index] >> 4 & 0x0f];
+         *out++ = detail::guid_encoder<CharT>[id.data[index] & 0x0f];
+      }
+
+      return out;
+   }
+
    template <class CharT,
              class Traits,
              class Allocator>
@@ -599,16 +623,7 @@ namespace uuids
    {
       std::basic_string<CharT, Traits, Allocator> uustr{detail::empty_guid<CharT>};
 
-      for (size_t i = 0, index = 0; i < 36; ++i)
-      {
-         if (i == 8 || i == 13 || i == 18 || i == 23)
-         {
-            continue;
-         }
-         uustr[i] = detail::guid_encoder<CharT>[id.data[index] >> 4 & 0x0f];
-         uustr[++i] = detail::guid_encoder<CharT>[id.data[index] & 0x0f];
-         index++;
-      }
+      to_string<CharT>(id, uustr.begin());
 
       return uustr;
    }
@@ -616,7 +631,10 @@ namespace uuids
    template <class Elem, class Traits>
    std::basic_ostream<Elem, Traits>& operator<<(std::basic_ostream<Elem, Traits>& s, uuid const& id)
    {
-       s << to_string(id);
+       Elem buffer[36];
+       to_string<Elem>(id, buffer);
+
+       s << std::basic_string_view<Elem, Traits>(buffer, 36);
        return s;
    }
 
@@ -986,8 +1004,11 @@ namespace std
       template <class FormatContext>
       auto format(uuids::uuid const & id, FormatContext & ctx) const
       {
+         CharT buffer[36];
+         uuids::to_string<CharT>(id, buffer);
+
          return formatter<basic_string_view<CharT>, CharT>::format(
-            uuids::to_string<CharT>(id), ctx);
+            basic_string_view<CharT>(buffer, 36), ctx);
       }
    };
 #endif
