@@ -23,6 +23,10 @@
 #    include <version>
 #  endif
 
+// The feature-test macro is deliberately tested first, and the __cplusplus value only as a fallback.
+// A standard library can provide a complete <span> while the compiler still reports a pre-C++20 value for __cplusplus: 
+// GCC 10 reports 201709L for -std=c++20 because the support was experimental, yet it ships <span> and defines __cpp_lib_span.
+// Checking __cplusplus alone made those compilers fall back to gsl::span, so keep the order.
 #  if defined(__cpp_lib_span) || ((__cplusplus >= 202002L || defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) && __has_include(<span>))
 #    include <span>
 #    define STDUUID_USE_STD_SPAN
