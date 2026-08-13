@@ -115,14 +115,28 @@ The following is a list of examples for using the library:
 
 * Creating a new UUID with the name generator
 
+  The generator is constructed from a *namespace* UUID; the name to hash is the argument of the call operator. The library predefines the namespace IDs listed above, such as `uuid_namespace_dns` for names that are domain names.
+
   ```cpp
-  uuids::uuid_name_generator gen(uuids::uuid::from_string("47183823-2574-4bfd-b411-99ed177d3e43").value());
+  uuids::uuid_name_generator gen(uuids::uuid_namespace_dns);
   uuid const id = gen("john");
 
   assert(!id.is_nil());
   assert(id.version() == uuids::uuid_version::name_based_sha1);
   assert(id.variant() == uuids::uuid_variant::rfc);
   ```
+
+  Any UUID can serve as the namespace, so an application specific one can be used instead. Only the namespace is parsed with `from_string()`, never the name, and the result must be checked because parsing fails for anything that is not a UUID.
+
+  ```cpp
+  auto ns = uuids::uuid::from_string("47183823-2574-4bfd-b411-99ed177d3e43");
+  assert(ns.has_value());
+
+  uuids::uuid_name_generator gen(ns.value());
+  uuid const id = gen("john");
+  ```
+
+  Because the generated UUIDs are version 5 as defined by RFC 4122, the same namespace and name always produce the same UUID, in this and any other conforming implementation.
 
 * Create a UUID from a string
 
